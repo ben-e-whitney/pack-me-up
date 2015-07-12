@@ -70,3 +70,10 @@ class WeatherDependentItem(Item):
                 return 0
         else:
             return 1
+
+if __name__ == "__main__":
+    questions = ["zip code", "days", "nights",
+                     "exercise (y/n)", "formal wear needed (y/n)"]
+
+    trip = { q: input(q + "? ").lower() for q in questions }
+
