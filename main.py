@@ -1,12 +1,4 @@
 import pywapi
-import sys
-
-class Item:
-    pass
-
-class Clothing(Item):
-    pass
-
 
 if __name__ == "__main__":
     questions = ["zip code", "days", "nights",
