@@ -1,86 +1,83 @@
 import pywapi
 
-weather = None
+import sys
 
-    
+class Forecast:
+    pass
+
 class Item:
     pass
 
 class TimeDependentItem(Item):
-    def __init__(self, minimum_duration=None, maximum_duration=None):
-        self.minimum_duration = int(minimum_duration)
-        self.maximum_duration = int(maximum_duration)
+    def __init__(self, **kwargs):
+        self.minimum_duration = kwargs.get('minimum_duration', None)
+        self.maximum_duration = kwargs.get('maximum_duration', None)
 
-    def evaluate(self, queries):
+    def evaluate(self, **kwargs):
         try:
-            duration = queries['duration']
+            duration = kwargs['duration']
         except KeyError:
-            print('TimeDependentItem not given duration query.')
+            print('TimeDependentItem.evaluate not given duration.')
             sys.exit()
-        return int(self.minimum_duration <= duration.duration <=
-                   self.maximum_duration)
+        try:
+            acceptable = ((self.minimum_duration is None or
+                           self.minimum_duration <= duration) and
+                          (self.maximum_duration is None or
+                           self.maximum_duration >= duration))
+        except TypeError:
+            print('Encountered error in comparing minimum duration ({mnd}), '
+                  'maximum duration ({mxd}), and duration ({dur}).'.format(
+                      mnd=self.minimum_duration, mxd=self.maximum_duration,
+                      dur=duration))
+    return int(acceptable)
 
 class WeatherDependentItem(Item):
-    def __init__(self, minimum_temperature=-float('inf'),
-                 maximum_temperature=float('inf'), rain=None, snow=None):
-        try:
-            self.minimum_temperature = float(minimum_temperature)
-        except TypeError:
-            print('Could not interpret minimum temperature {tem} as a float.'
-                  .format(tem=minimum_temperature))
-            sys.exit()
-        try:
-            self.maximum_temperature = float(maximum_temperature)
-        except TypeError:
-            print('Could not interpret maximum temperature {tem} as a float.'
-                  .format(tem=maximum_temperature))
-            sys.exit()
-        if rain is None:
-            self.rain = rain
-        else:
-            try:
-                self.rain = bool(rain)
-            except TypeError:
-                print('Could not interpret rain setting {rai} as a boolean.'
-                      .format(rai=rain))
-        if snow is None:
-            self.snow = snow
-        else:
-            try:
-                self.snow = bool(snow)
-            except TypeError:
-                print('Could not interpret rain setting {rai} as a boolean.'
-                      .format(rai=rain))
+    def __init__(self, **kwargs):
+        self.minimum_temperature = kwargs.get('minimum_temperature', None)
+        self.maximum_temperature = kwargs.get('maximum_temperature', None)
+        self.rain = kwargs.get('rain', None)
+        self.snow = kwargs.get('snow', None)
 
-    def evaluate(self, queries):
+    def evaluate(self, **kwargs):
         try:
-            weather = queries['weather']
+            weather = kwargs['weather']
         except KeyError:
-            print('Error: WeatherDependentItem not given weather query.')
+            print('Error: WeatherDependentItem.evaluate not given weather.')
             sys.exit()
-        if not (
+        try:
+            acceptable = (
                 self.minimum_temperature <= weather.minimum_temperature and
                 weather.maximum_temperature <= self.maximum_temperature
-        ):
-            return 0
-        elif self.rain is not None:
-            if weather.rain != self.rain:
-                return 0
-        elif self.snow is not None:
-            if weather.snow != self.snow:
-                return 0
-        else:
-            return 1
+            )
+        except TypeError:
+            print('Encountered error in comparing minimum temperature '
+                  '({mnt}), forecasted low ({low}), maximum temperature '
+                  '({mxt}), and forecasted high ({hig}).'.format(
+                      mnt=self.minimum_temperature,
+                      low=weather.minimum_temperature,
+                      mxt=self.maximum_temperature,
+                      hig=weather.maximum_temperature))
+            sys.exit()
+        try:
+            acceptable = (acceptable and (self.rain is None or
+                          weather.rain == self.rain) and (self.snow is None or
+                          weather.snow == self.snow))
+        except TypeError:
+            print('Encountered error in comparing rain forecast ({rfo}) and '
+                  'rain preference ({rai}) or snow forecast ({sfo}) and '
+                  'snow preference ({sno})'.format(rfo=weather.rain,
+                      rai=self.rain, sfo=weather.snow, sno=self.snow))
+            sys.exit()
+        return int(acceptable)
 
 def main():
-    global weather
-    questions = ["zip code", "days", "nights",
-                     "exercise (y/n)", "formal wear needed (y/n)"]
+    questions = ['ZIP code', 'Days', 'Exercise (y/n)',
+                 'Formal wear needed (y/n)']
 
-    trip = { q: input(q + "? ").lower() for q in questions }
-    weather = pywapi.get_weather_from_weather_com(trip["zip code"], units="")
+    trip = {question: input('{que}? ').format(que=question).lower()
+            for question in questions}
+    forecast = Forecast(pywapi.get_weather_from_weather_com(trip['ZIP code'],
+                                                            units='imperial'))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
-
