@@ -42,7 +42,7 @@ class Forecast:
     def __init__(self, weather, days):
         self.minimum_temperature = min(float(daily['low']) for daily in
                                        weather['forecasts'][1:days+1])
-        self.minimum_temperature = max(float(daily['high']) for daily in
+        self.maximum_temperature = max(float(daily['high']) for daily in
                                        weather['forecasts'][1:days+1])
         prob_no_rain = 1
         prob_no_snow = 1
