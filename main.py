@@ -25,17 +25,14 @@ parser.add_argument('--exercise', help='whether exercise clothes will be '
 parser.add_argument('--config-file', help='custom location of configuration '
                     'file', default=os.path.join(os.environ['HOME'],
                                                  '.pack-me-up'))
-parser.add_argument('days', help='duration of trip in days')
+parser.add_argument('days', type=int, help='duration of trip in days')
 args = parser.parse_args()
 
+preferences = DEFAULT_PREFERENCES
 if os.path.isfile(args.config_file):
     with open(args.config_file, 'r') as f:
-        preferences = json.load(f)
-    #TODO: make this more user-friendly.
-    for key in DEFAULT_PREFERENCES:
-        assert key in preferences
+        preferences.update(json.load(f))
 else:
-    preferences = DEFAULT_PREFERENCES
     print('writing a default config file to {fil} ...'.format(
         fil=args.config_file))
     with open(args.config_file, 'w') as f:
@@ -133,6 +130,7 @@ def main():
         pywapi.get_weather_from_weather_com(args.zip_code, units='imperial'),
         args.days,
     )
+    print(weather.minimum_temperature, weather.rain, weather.snow)
 
 if __name__ == '__main__':
     main()
