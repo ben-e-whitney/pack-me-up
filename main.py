@@ -2,10 +2,7 @@ import pywapi
 
 import argparse
 import json
-import math
 import os
-import sys
-import xml.etree.ElementTree as ETR
 
 #TODO: import some type of logging framework.
 WATER_FREEZING_POINT = 32
