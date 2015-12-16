@@ -1,65 +1,69 @@
 class Item:
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
         self.name = kwargs['name']
 
-    def to_XML(self):
-        #TODO: write this.
-        pass
+    def to_JSON(self, f):
+        json.dump({'args': self.args, 'kwargs': self.kwargs}, f)
 
-    #TODO: or whatever.
-    @classmethod
-    def amount_to_bring(*args):
-        return max(*args) if all(*args) else 0
+    def eligible(self, *args, **kwargs):
+        return True
+
+    def number(self, *args, **kwargs):
+        return 1
 
 class DurationDependentItem(Item):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.minimum_duration = kwargs.get('minimum_duration', None)
         self.maximum_duration = kwargs.get('maximum_duration', None)
         self.per_day = kwargs.get('per_day', None)
+        super().__init__(*args, **kwargs)
 
-    def evaluate(self, **kwargs):
+    def eligible(self, *args, **kwargs):
         duration = kwargs['duration']
-        acceptable = ((self.minimum_duration is None or
-                       self.minimum_duration <= duration) and
-                      (self.maximum_duration is None or
-                       self.maximum_duration >= duration))
-        if acceptable and self.per_day is not None:
-            return math.ceil(duration*self.per_day)
+        duration_acceptable = ((self.minimum_duration is None or
+                                self.minimum_duration <= duration) and
+                               (self.maximum_duration is None or
+                                self.maximum_duration >= duration))
+        return duration_acceptable and super().eligible(*args, **kwargs)
+
+    def number(self, *args, **kwargs):
+        if self.per_day is not None:
+            return math.ceil(kwargs['duration'] * self.per_day)
         else:
-            return int(acceptable)
+            return super().number(*args, **kwargs)
 
 class WeatherDependentItem(Item):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.minimum_temperature = kwargs.get('minimum_temperature', None)
         self.maximum_temperature = kwargs.get('maximum_temperature', None)
+        #TODO: document what these stand for.
         self.rain = kwargs.get('rain', None)
         self.snow = kwargs.get('snow', None)
+        super().__init__(*args, **kwargs)
 
-    def evaluate(self, **kwargs):
+    def eligible(self, *args, **kwargs):
         weather = kwargs['weather']
-        acceptable = (
+        tempature_acceptable = (
             (self.minimum_temperature is None or
              weather.minimum_temperature >= self.minimum_temperature) and
             (self.maximum_temperature is None or
              weather.maximum_temperature <= self.maximum_temperature)
         )
-        acceptable = acceptable and (
+        precipitation_acceptable = (
             (self.rain is None or weather.rain == self.rain) and
             (self.snow is None or weather.snow == self.snow)
         )
-        return int(acceptable)
+        return (tempature_acceptable and precipitation_acceptable and
+                super().eligible(*args, **kwargs))
 
 class ClothingItem(DurationDependentItem, WeatherDependentItem):
-    def __init__(self, **kwargs):
-        super(TimeDependentItem).__init__(**kwargs)
-        super(WeatherDependentItem).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
         self.formal = kwargs.get('formal', None)
+        super().__init__(*args, **kwargs)
 
-    def evaluate(self, **kwargs):
+    def eligible(self, *args, **kwargs):
         formal = kwargs['formal']
-        acceptable = self.formal is None or self.formal == formal
-        #TODO: this isn't right. Need maybe class method or something for
-        #combining amounts.
-        return (acceptable and super(TimeDependentItem).evaluate(**kwargs) and
-                super(WeatherDependentItem).evaluate(**kwargs))
-
+        formality_acceptable = self.formal is None or self.formal == formal
+        return formality_acceptable and super().eligible(*args, **kwargs)
