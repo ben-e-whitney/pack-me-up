@@ -38,18 +38,22 @@ else:
     with open(args.config_file, 'w') as f:
         json.dump(preferences, f)
 
+#TODO: make this a function if you don't end up using it as a class.
 class Forecast:
     def __init__(self, weather, days):
+        forecasts = weather['forecasts']
+        if len(forecasts) < days+1:
+            print('warning: forecast unavailable for part of trip duration')
         self.minimum_temperature = min(float(daily['low']) for daily in
-                                       weather['forecasts'][1:days+1])
+                                       forecasts[1:days+1])
         self.maximum_temperature = max(float(daily['high']) for daily in
-                                       weather['forecasts'][1:days+1])
+                                       forecasts[1:days+1])
         prob_no_rain = 1
         prob_no_snow = 1
         #When evaluating the chance of precipitation, include the day you're
         #leaving/arriving (excluded above when looking at temperatures).
-        for daily in weather['forecasts'][0:days+1]:
-            #Could argue that the first day shouldn't factor in the daytime
+        for daily in forecasts[0:days+1]:
+            #Could argue that the first *day* shouldn't factor in the daytime
             #forecast. Simpler this way, though.
             prob_no_precip = (1-0.01*float(daily['day']['chance_precip'])*
                               1-0.01*float(daily['night']['chance_precip']))
