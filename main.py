@@ -30,38 +30,36 @@ parser.add_argument('--snow_threshold', type=float, default=0.1,
 parser.add_argument('--data_path', help='file with Items definitions',
                     default='')
 
+def get_trip_info(args):
+    info = vars(args)
+    #TODO: add something for when forecast cannot be fetched.
+    forecasts = pywapi.get_weather_from_weather_com(info['zip_code'],
+        units='imperial')['forecasts']
+    if len(forecasts) < info['days']+1:
+        print('warning: forecast unavailable for part of trip duration')
+    info.update(minimum_temperature=min(float(daily['low'])
+        for daily in forecasts[1:info['days']+1]))
+    info.update(maximum_temperature=max(float(daily['high'])
+        for daily in forecasts[1:info['days']+1]))
 
-#TODO: make this a function if you don't end up using it as a class.
-class Forecast:
-    def __init__(self, weather, days):
-        forecasts = weather['forecasts']
-        if len(forecasts) < days+1:
-            print('warning: forecast unavailable for part of trip duration')
-        self.minimum_temperature = min(float(daily['low']) for daily in
-                                       forecasts[1:days+1])
-        self.maximum_temperature = max(float(daily['high']) for daily in
-                                       forecasts[1:days+1])
-        prob_no_rain = 1
-        prob_no_snow = 1
-        #When evaluating the chance of precipitation, include the day you're
-        #leaving/arriving (excluded above when looking at temperatures).
-        for daily in forecasts[0:days+1]:
-            #Could argue that the first *day* shouldn't factor in the daytime
-            #forecast. Simpler this way, though.
-            prob_no_precip = (1-0.01*float(daily['day']['chance_precip'])*
-                              1-0.01*float(daily['night']['chance_precip']))
-            if float(daily['high']) >= WATER_FREEZING_POINT:
-                prob_no_rain *= prob_no_precip
-            if float(daily['low']) <= WATER_FREEZING_POINT:
-                prob_no_snow *= prob_no_precip
-        self.rain = 1-prob_no_rain >= preferences['rain_threshold']
-        self.snow = 1-prob_no_snow >= preferences['snow_threshold']
+    prob_no_rain = 1
+    prob_no_snow = 1
+    #When evaluating the chance of precipitation, include the day you're
+    #leaving/arriving (excluded above when looking at temperatures).
+    for daily in forecasts[0:info['days']+1]:
+        #Could argue that the first *day* shouldn't factor in the daytime
+        #forecast. Simpler this way, though.
+        prob_no_precip = (1-0.01*float(daily['day']['chance_precip'])*
+                          1-0.01*float(daily['night']['chance_precip']))
+        if float(daily['high']) >= WATER_FREEZING_POINT:
+            prob_no_rain *= prob_no_precip
+        if float(daily['low']) <= WATER_FREEZING_POINT:
+            prob_no_snow *= prob_no_precip
+    info.update(rain=1-prob_no_rain >= info['rain_threshold'])
+    info.update(snow=1-prob_no_snow >= info['snow_threshold'])
+    return info
 
 def main():
-    weather = Forecast(
-        pywapi.get_weather_from_weather_com(args.zip_code, units='imperial'),
-        args.days,
-    )
     args = parser.parse_args()
     if not args.data_path:
         for directory in xdg.BaseDirectory.load_data_paths(APPLICATION_NAME):
@@ -77,6 +75,7 @@ def main():
             item.items[info['name']](*info['args'], **info['kwargs'])
             for info in json.load(f)
         ]
+    trip_info = get_trip_info(args)
 
 if __name__ == '__main__':
     main()
