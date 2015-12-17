@@ -1,12 +1,17 @@
 import pywapi
+import xdg.BaseDirectory
 
 import argparse
 import json
 import os
 
+import item
+
 #TODO: import some type of logging framework.
 
 WATER_FREEZING_POINT = 32
+APPLICATION_NAME = 'pack-me-up'
+DATA_NAME_DEFAULT = 'items.json'
 
 parser = argparse.ArgumentParser(description=
                                  'Produce a packing list for a trip.')
@@ -58,6 +63,20 @@ def main():
         args.days,
     )
     args = parser.parse_args()
+    if not args.data_path:
+        for directory in xdg.BaseDirectory.load_data_paths(APPLICATION_NAME):
+            path = os.path.join(directory, DATA_NAME_DEFAULT)
+            if os.path.isfile(path):
+                args.data_path = path
+                break
+        else:
+            raise RuntimeError('No data found.')
+    items = []
+    with open(args.data_path, 'r') as f:
+        items = [
+            item.items[info['name']](*info['args'], **info['kwargs'])
+            for info in json.load(f)
+        ]
 
 if __name__ == '__main__':
     main()

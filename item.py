@@ -69,3 +69,10 @@ class ClothingItem(DurationDependentItem, WeatherDependentItem):
         formal = kwargs['formal']
         formality_acceptable = self.formal is None or self.formal == formal
         return formality_acceptable and super().eligible(*args, **kwargs)
+
+items = {cls.__name__: cls for cls in (
+    Item,
+    DurationDependentItem,
+    WeatherDependentItem,
+    ClothingItem
+)}
