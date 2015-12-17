@@ -39,8 +39,10 @@ class DurationDependentItem(Item):
 
 class WeatherDependentItem(Item):
     def __init__(self, *args, **kwargs):
-        self.minimum_temperature = kwargs.get('minimum_temperature', None)
-        self.maximum_temperature = kwargs.get('maximum_temperature', None)
+        self.min_lo_temp = kwargs.get('low_temperature_above', None)
+        self.max_lo_temp = kwargs.get('low_temperature_below', None)
+        self.min_hi_temp = kwargs.get('high_temperature_above', None)
+        self.max_hi_temp = kwargs.get('high_temperature_below', None)
         #TODO: document what these stand for.
         self.rain = kwargs.get('rain', None)
         self.snow = kwargs.get('snow', None)
@@ -48,10 +50,14 @@ class WeatherDependentItem(Item):
 
     def eligible(self, *args, **kwargs):
         tempature_acceptable = (
-            (self.minimum_temperature is None or
-             weather.minimum_temperature >= self.minimum_temperature) and
-            (self.maximum_temperature is None or
-             weather.maximum_temperature <= self.maximum_temperature)
+            (self.min_lo_temp is None or
+             kwargs['minimum_temperature'] >= self.min_lo_temp) and
+            (self.max_lo_temp is None or
+             kwargs['minimum_temperature'] <= self.max_lo_temp) and
+            (self.min_hi_temp is None or
+             kwargs['maximum_temperature'] >= self.min_hi_temp) and
+            (self.max_hi_temp is None or
+             kwargs['maximum_temperature'] <= self.max_hi_temp)
         )
         precipitation_acceptable = (
             (self.rain is None or kwargs['rain'] == self.rain) and
