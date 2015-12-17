@@ -20,7 +20,8 @@ class DurationDependentItem(Item):
     def __init__(self, *args, **kwargs):
         self.minimum_duration = kwargs.get('minimum_duration', None)
         self.maximum_duration = kwargs.get('maximum_duration', None)
-        self.per_day = kwargs.get('per_day', None)
+        self.per_day = kwargs['per_day'] if 'per_day' in kwargs else (
+            1 / kwargs['days_per'] if 'days_per' in kwargs else None)
         super().__init__(*args, **kwargs)
 
     def eligible(self, *args, **kwargs):
