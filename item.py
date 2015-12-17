@@ -6,8 +6,9 @@ class Item:
         self.kwargs = kwargs
         self.name = kwargs['name']
 
-    def to_JSON(self, f):
-        json.dump({'args': self.args, 'kwargs': self.kwargs}, f)
+    def recipe(self):
+        return {'name': self.__class__.__name__, 'args': self.args,
+            'kwargs': self.kwargs}
 
     def eligible(self, *args, **kwargs):
         return True
