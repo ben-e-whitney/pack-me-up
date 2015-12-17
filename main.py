@@ -77,5 +77,16 @@ def main():
         ]
     trip_info = get_trip_info(args)
 
+    to_print = []
+    number_column_width = 0
+    for item_ in items:
+        if item_.eligible(**trip_info):
+            num = str(item_.number(**trip_info))
+            number_column_width = max(number_column_width, len(num))
+            to_print.append((num, item_.name))
+    for num, name in to_print:
+        print('{num} {nam}'.format(num=num.ljust(number_column_width, ' '),
+                                   nam=name))
+
 if __name__ == '__main__':
     main()
