@@ -5,35 +5,26 @@ import json
 import os
 
 #TODO: import some type of logging framework.
+
 WATER_FREEZING_POINT = 32
-DEFAULT_PREFERENCES = {
-    'rain_threshold': 0.1,
-    'snow_threshold': 0.1,
-}
 
 parser = argparse.ArgumentParser(description=
                                  'Produce a packing list for a trip.')
 parser.add_argument('zip_code', help='ZIP code of destination',
                     metavar='ZIP-code')
+parser.add_argument('days', type=int, help='duration of trip in days')
 parser.add_argument('--formal-wear', help='whether formal wear will be needed',
                     action='store_true')
 parser.add_argument('--exercise', help='whether exercise clothes will be '
                     'needed', action='store_true')
-parser.add_argument('--config-file', help='custom location of configuration '
-                    'file', default=os.path.join(os.environ['HOME'],
-                                                 '.pack-me-up'))
-parser.add_argument('days', type=int, help='duration of trip in days')
-args = parser.parse_args()
+parser.add_argument('--rain_threshold', type=float, default=0.1,
+                    help='probability of rain above which to pack rain gear')
+parser.add_argument('--snow_threshold', type=float, default=0.1,
+                    help='probability of snow above which to pack snow gear')
+#TODO: explain default here.
+parser.add_argument('--data_path', help='file with Items definitions',
+                    default='')
 
-preferences = DEFAULT_PREFERENCES
-if os.path.isfile(args.config_file):
-    with open(args.config_file, 'r') as f:
-        preferences.update(json.load(f))
-else:
-    print('writing a default config file to {fil} ...'.format(
-        fil=args.config_file))
-    with open(args.config_file, 'w') as f:
-        json.dump(preferences, f)
 
 #TODO: make this a function if you don't end up using it as a class.
 class Forecast:
@@ -66,6 +57,7 @@ def main():
         pywapi.get_weather_from_weather_com(args.zip_code, units='imperial'),
         args.days,
     )
+    args = parser.parse_args()
 
 if __name__ == '__main__':
     main()
